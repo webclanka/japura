@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -21,6 +22,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar',
+        'university',
+        'total_points',
+        'current_streak',
+        'longest_streak',
+        'level',
+        'is_admin',
+        'last_active_at',
     ];
 
     /**
@@ -43,6 +52,35 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_admin' => 'boolean',
+            'last_active_at' => 'datetime',
         ];
+    }
+
+    public function quizAttempts()
+    {
+        return $this->hasMany(QuizAttempt::class);
+    }
+
+    public function achievements()
+    {
+        return $this->belongsToMany(Achievement::class, 'user_achievements')->withPivot('earned_at');
+    }
+
+    public function userAchievements()
+    {
+        return $this->hasMany(UserAchievement::class);
+    }
+
+    public function completedAttempts()
+    {
+        return $this->hasMany(QuizAttempt::class)->where('is_completed', true);
+    }
+
+    public function getRankAttribute(): int
+    {
+        return DB::table('users')
+            ->where('total_points', '>', $this->total_points)
+            ->count() + 1;
     }
 }
